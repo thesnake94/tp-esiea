@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  ctfd:
+    image: ctfd/ctfd:latest
+    container_name: ctfd
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ctfd_data:/var/ctfd
+    environment:
+      # ces variables servent uniquement à configurer le nom et l'url de base (optionnel)
+      - CTf_NAME=MiniCTF

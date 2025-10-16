@@ -1,0 +1,11 @@
+# mini-ctf/Dockerfile.web
+FROM php:8.1-apache
+
+# Installer les dépendances nécessaires puis activer mysqli
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libzip-dev \
+    && docker-php-ext-install mysqli pdo_mysql \
+    && rm -rf /var/lib/apt/lists/*
+
+# (optionnel) activer rewrite si besoin
+RUN a2enmod rewrite

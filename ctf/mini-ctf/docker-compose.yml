@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: ctf_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ctf
+      MYSQL_USER: ctfuser
+      MYSQL_PASSWORD: ctfpass
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./challenges/sqli/db_init.sql:/docker-entrypoint-initdb.d/db_init.sql:ro
+    ports:
+      - "3306:3306"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: ctf_web
+    volumes:
+      - ./challenges:/var/www/html/challenges:cached
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+
+volumes:
+  db_data:
