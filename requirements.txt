@@ -1,1 +1,3 @@
 Flask==3.0.2
+PyYAML==5.3         # CVEs -> unsafe load
+urllib3==1.25.8     # CVEs multiples sur anciennes versions
