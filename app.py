@@ -64,8 +64,10 @@ def vuln_eval():
 
 
 # 3) Path Traversal / File Read: limiter à un dossier sûr
-BASE_SAFE_DIR = os.path.abspath("safe_files")
-os.makedirs(BASE_SAFE_DIR, exist_ok=True)
+from pathlib import Path
+
+BASE_SAFE_DIR = Path("safe_files").resolve()
+BASE_SAFE_DIR.mkdir(parents=True, exist_ok=True)
 
 @app.get("/vuln/read")
 def vuln_read():
@@ -73,25 +75,28 @@ def vuln_read():
     if not path:
         return {"error": "missing path"}, 400
 
-    # interdire chemins absolus
+    # Interdire chemins absolus fournis par l'utilisateur (optionnel)
     if os.path.isabs(path):
         return {"error": "absolute paths not allowed"}, 403
 
-    # normaliser et rejoindre dans le dossier sûr
-    safe_path = os.path.normpath(os.path.join(BASE_SAFE_DIR, path))
+    # Construire le chemin et le résoudre (canonicalize)
+    candidate = (BASE_SAFE_DIR / path).resolve()
 
-    # s'assurer qu'on reste bien dans le répertoire autorisé
-    if not (safe_path == BASE_SAFE_DIR or safe_path.startswith(BASE_SAFE_DIR + os.sep)):
-        return {"error": "path traversal detected"}, 403
-
-    if not os.path.exists(safe_path) or not os.path.isfile(safe_path):
-        return {"error": "file not found"}, 404
-
+    # Vérification explicite : le chemin résolu doit être dans BASE_SAFE_DIR
     try:
-        with open(safe_path, "r", encoding="utf-8", errors="ignore") as f:
+        # .resolve() lève parfois si path non valide; on entourera l'accès
+        if BASE_SAFE_DIR not in candidate.parents and candidate != BASE_SAFE_DIR:
+            return {"error": "path traversal detected"}, 403
+
+        if not candidate.exists() or not candidate.is_file():
+            return {"error": "file not found"}, 404
+
+        # Ouvrir le fichier **seulement après** toutes les vérifications
+        with candidate.open("r", encoding="utf-8", errors="ignore") as f:
             return {"path": path, "content": f.read(200)}
-    except Exception as e:
+    except (RuntimeError, OSError) as e:
         return {"error": str(e)}, 500
+
 
 
 # 4) Unsafe YAML load: utiliser safe_load et gérer les erreurs
