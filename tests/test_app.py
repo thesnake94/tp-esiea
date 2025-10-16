@@ -1,3 +1,6 @@
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))  # ajoute la racine du repo au PYTHONPATH
+
 from app import app
 
 def test_health_route():
